@@ -5,11 +5,31 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+type Config interface {
+	Get(path string) interface{}
+	GetInt(path string) int
+	GetString(path string) string
+}
+
+type Logger interface {
+	ErrorF(category string, message string, args ...interface{})
+	Print(v ...interface{})
+}
+
+type ErrorHandler interface {
+	Error(e error)
+}
+
+type PathInterfaceGetter interface {
+	Get(path string) interface{}
+}
+
 type GormReadWrite struct {
 	read      *gorm.DB
 	write     *gorm.DB
 	readmock  sqlmock.Sqlmock
 	writemock sqlmock.Sqlmock
+	cache     *Cache
 }
 
 func (g *GormReadWrite) SetRead(db *gorm.DB) {
@@ -44,6 +64,18 @@ func (g *GormReadWrite) WriteMock() sqlmock.Sqlmock {
 	return g.writemock
 }
 
+func (g *GormReadWrite) InitCache(constructor func() CacheProvider) {
+	g.cache = &Cache{
+		cacheProviderConstructor: constructor,
+		cache:                    constructor(),
+		db:                       g,
+	}
+}
+
+func (g *GormReadWrite) GetCache() *Cache {
+	return g.cache
+}
+
 func (g *GormReadWrite) Close() error {
 	e := g.read.Close()
 	e2 := g.write.Close()
@@ -54,23 +86,4 @@ func (g *GormReadWrite) Close() error {
 		return e2
 	}
 	return nil
-}
-
-type Config interface {
-	Get(path string) interface{}
-	GetInt(path string) int
-	GetString(path string) string
-}
-
-type Logger interface {
-	ErrorF(category string, message string, args ...interface{})
-	Print(v ...interface{})
-}
-
-type ErrorHandler interface {
-	Error(e error)
-}
-
-type PathInterfaceGetter interface {
-	Get(path string) interface{}
 }
