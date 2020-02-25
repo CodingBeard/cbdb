@@ -2,7 +2,6 @@ package cbdb
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -68,7 +67,6 @@ func (k *CacheKeyGenerator) Generate() string {
 	for _, extra := range k.Extra {
 		key += extra + ":"
 	}
-	fmt.Println(key)
 	return key
 }
 
@@ -88,7 +86,7 @@ func (c *Cache) FindWhere(out interface{}, where CachableResultModel, ttl time.D
 		Ttl: ttl,
 		KeyGen: CacheKeyGenerator{
 			Search: where,
-			Extra: []string{"FindWhere"},
+			Extra:  []string{"FindWhere"},
 		},
 	})
 }
@@ -102,7 +100,7 @@ func (c *Cache) FirstWhere(out interface{}, where CachableResultModel, ttl time.
 		Ttl: ttl,
 		KeyGen: CacheKeyGenerator{
 			Search: where,
-			Extra: []string{"FirstWhere"},
+			Extra:  []string{"FirstWhere"},
 		},
 	})
 }
@@ -116,7 +114,7 @@ func (c *Cache) LastWhere(out interface{}, where CachableResultModel, ttl time.D
 		Ttl: ttl,
 		KeyGen: CacheKeyGenerator{
 			Search: where,
-			Extra: []string{"LastWhere"},
+			Extra:  []string{"LastWhere"},
 		},
 	})
 }
@@ -131,7 +129,7 @@ func (c *Cache) CountWhere(where CachableResultModel, ttl time.Duration) (int64,
 		Ttl: ttl,
 		KeyGen: CacheKeyGenerator{
 			Search: where,
-			Extra: []string{"CountWhere"},
+			Extra:  []string{"CountWhere"},
 		},
 	})
 
