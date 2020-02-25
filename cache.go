@@ -2,6 +2,7 @@ package cbdb
 
 import (
 	"errors"
+	"github.com/codingbeard/cbutil"
 	"reflect"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ type Cache struct {
 	cacheProviderConstructor func() CacheProvider
 	cache                    CacheProvider
 	db                       *GormReadWrite
+	keylock                  *cbutil.MultiManualResetEvent
 }
 
 type CacheProvider interface {
@@ -56,14 +58,18 @@ func (k *CacheKeyGenerator) Generate() string {
 	for _, where := range k.Wheres {
 		key += where + ":"
 	}
-	key += k.Order + ":"
+	if len(k.Order) > 0 {
+		key += k.Order + ":"
+	}
 	if k.Limit > 0 {
 		key += strconv.Itoa(k.Limit) + ":"
 	}
 	if k.Offset > 0 {
 		key += strconv.Itoa(k.Offset) + ":"
 	}
-	key += k.Group + ":"
+	if len(k.Group) > 0 {
+		key += k.Group + ":"
+	}
 	for _, extra := range k.Extra {
 		key += extra + ":"
 	}
@@ -163,6 +169,18 @@ func (c *Cache) Cache(args CacheArgs) error {
 	if bucket == "" && args.KeyGen.Search != nil {
 		bucket = args.KeyGen.Search.GetCacheBucket()
 	}
+
+	lockKey := bucket + key
+	lockIsNew, lock := c.keylock.Get(lockKey, true)
+	if !lockIsNew {
+		lock.Wait()
+	}
+	defer func() {
+		if lockIsNew {
+			lock.Set()
+			c.keylock.Remove(lockKey)
+		}
+	}()
 
 	var cache CacheProvider
 	if bucket != "" {

@@ -2,6 +2,7 @@ package cbdb
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/codingbeard/cbutil"
 	"github.com/jinzhu/gorm"
 )
 
@@ -69,6 +70,7 @@ func (g *GormReadWrite) InitCache(constructor func() CacheProvider) {
 		cacheProviderConstructor: constructor,
 		cache:                    constructor(),
 		db:                       g,
+		keylock:                  cbutil.NewMultiManualResetEvent(),
 	}
 }
 
