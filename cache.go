@@ -151,6 +151,15 @@ func (c *Cache) SaveFlush(model CachableResultModel) error {
 	return c.Flush(CacheKeyGenerator{Bucket: model.GetCacheBucket()})
 }
 
+func (c *Cache) DeleteWhereFlush(model CachableResultModel, where CachableResultModel) error {
+	e := c.db.Write().Delete(model, where).Error
+	if e != nil {
+		return e
+	}
+
+	return c.Flush(CacheKeyGenerator{Bucket: model.GetCacheBucket()})
+}
+
 func (c *Cache) Cache(args CacheArgs) error {
 	valueOfOut := reflect.ValueOf(args.Out)
 	if valueOfOut.Kind() != reflect.Ptr {
